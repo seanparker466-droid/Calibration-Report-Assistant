@@ -2,12 +2,18 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Cal Report">
+<meta name="theme-color" content="#141414">
 <title>Calibration Report Assistant</title>
+<link rel="manifest" href="manifest.json">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;600;700;900&family=Barlow+Condensed:wght@600;700;900&display=swap" rel="stylesheet">
 <style>
-  /* ─── REDLINE THEME (default) ─── */
+  /* ─── REDLINE (dark default) ─── */
   :root {
     --bg:        #141414;
     --surface:   #1f1f1f;
@@ -27,7 +33,7 @@
   }
 
   /* ─── LIGHT THEME ─── */
-  body.light {
+  body.theme-light {
     --bg:        #f0f4f8;
     --surface:   #ffffff;
     --surface2:  #e8edf2;
@@ -38,19 +44,56 @@
     --fail:      #c62828;
     --text:      #1a1a2e;
     --muted:     #607080;
-    --disp-bg:   #1a1a2e;
+    --disp-bg:   #ffffff;
     --glow-r:    211,47,47;
     --glow-g:    46,125,50;
   }
 
+  /* ─── ARCTIC BLUE ─── */
+  body.theme-arctic {
+    --bg:        #0d1b2a;
+    --surface:   #112233;
+    --surface2:  #162840;
+    --border:    #1e3a55;
+    --accent:    #00b4d8;
+    --accent2:   #48cae4;
+    --pass:      #52b788;
+    --fail:      #e63946;
+    --text:      #caf0f8;
+    --muted:     #4a7c9a;
+    --disp-bg:   #060f18;
+    --glow-r:    0,180,216;
+    --glow-g:    82,183,136;
+  }
+
+  /* ─── MIDNIGHT GREEN ─── */
+  body.theme-green {
+    --bg:        #0a0f0a;
+    --surface:   #111811;
+    --surface2:  #182018;
+    --border:    #243024;
+    --accent:    #39d353;
+    --accent2:   #7ee787;
+    --pass:      #39d353;
+    --fail:      #f85149;
+    --text:      #e6eae6;
+    --muted:     #4a6e4a;
+    --disp-bg:   #050805;
+    --glow-r:    57,211,83;
+    --glow-g:    57,211,83;
+  }
+
   * { box-sizing:border-box; margin:0; padding:0; }
+
+  html, body {
+    height:100%; width:100%; overflow:hidden;
+  }
 
   body {
     font-family:var(--sans);
     background:var(--bg);
     color:var(--text);
-    min-height:100vh;
-    overflow-x:hidden;
+    display:flex; flex-direction:column;
     transition:background .25s, color .25s;
   }
 
@@ -65,10 +108,29 @@
   .theme-toggle:hover { border-color:var(--accent); color:var(--accent); }
   .theme-toggle .tog-icon { font-size:16px; }
 
+  /* ─── THEME SELECTOR ─── */
+  .theme-selector { position:relative; }
+  .theme-menu {
+    position:absolute; top:calc(100% + 8px); left:0;
+    background:var(--surface); border:1px solid var(--accent);
+    border-radius:10px; min-width:180px; z-index:9999;
+    box-shadow:0 8px 32px rgba(0,0,0,0.4); overflow:hidden;
+  }
+  .theme-option {
+    padding:11px 16px; font-family:var(--mono); font-size:12px; font-weight:700;
+    color:var(--text); cursor:pointer; letter-spacing:1px;
+    display:flex; align-items:center; gap:10px;
+    transition:background .12s; border-bottom:1px solid var(--border);
+  }
+  .theme-option:last-child { border-bottom:none; }
+  .theme-option:hover { background:rgba(var(--glow-r),0.1); color:var(--accent); }
+  .theme-check { margin-left:auto; color:var(--accent); font-size:14px; }
+
+
   /* ─── HEADER ─── */
   header {
     display:flex; align-items:center; gap:16px;
-    padding:14px 24px;
+    padding:14px 24px; flex-shrink:0;
     background:var(--surface);
     border-bottom:2px solid var(--accent);
   }
@@ -83,7 +145,7 @@
   }
 
   /* ─── LAYOUT ─── */
-  .app { display:flex; height:calc(100vh - 62px); }
+  .app { display:flex; flex:1; min-height:0; }
 
   /* ─── SIDEBAR ─── */
   aside {
@@ -91,7 +153,7 @@
     background:var(--surface);
     border-right:1px solid var(--border);
     display:flex; flex-direction:column;
-    overflow:hidden;
+    overflow-y:auto; overflow-x:hidden;
   }
   .sidebar-section { padding:14px; border-bottom:1px solid var(--border); }
   .sidebar-label {
@@ -230,7 +292,6 @@
     border-radius:12px; margin-bottom:16px; color:var(--accent);
     letter-spacing:6px; min-height:120px;
   }
-  body.light .input-display { color:#ff1744; border-color:#d32f2f; }
 
   /* Keypad — large tablet keys */
   .keypad-row { display:flex; gap:10px; margin-bottom:10px; }
@@ -339,7 +400,8 @@
   #toast.err { border-color:var(--fail); color:var(--fail); }
 
   .footer-bar {
-    position:fixed; bottom:0; left:0; right:0; padding:5px 20px;
+    flex-shrink:0;
+    padding:5px 20px;
     background:var(--surface); border-top:1px solid var(--border);
     font-family:var(--mono); font-size:10px; color:var(--muted);
     display:flex; justify-content:space-between; z-index:500;
@@ -445,8 +507,21 @@
     <h1>⚡ Calibration Report Assistant</h1>
     <div class="subtitle">FIELD DATA ENTRY SYSTEM v2.0</div>
   </div>
-  <button class="theme-toggle" onclick="toggleTheme()" id="themeToggleBtn">
-    <span class="tog-icon">☀️</span> LIGHT MODE
+  <div class="theme-selector" id="themeSelectorWrap">
+    <button class="theme-toggle" onclick="toggleThemeMenu()" id="themeToggleBtn">
+      <span class="tog-icon" id="themeIcon">🎨</span>
+      <span id="themeLabel">REDLINE</span>
+      <span style="font-size:10px;margin-left:2px;">▾</span>
+    </button>
+    <div class="theme-menu" id="themeMenu" style="display:none">
+      <div class="theme-option" onclick="setTheme('redline')"><span>🔴</span> Redline <span class="theme-check" id="chk-redline">✓</span></div>
+      <div class="theme-option" onclick="setTheme('light')"><span>☀️</span> Light <span class="theme-check" id="chk-light"></span></div>
+      <div class="theme-option" onclick="setTheme('arctic')"><span>🔵</span> Arctic Blue <span class="theme-check" id="chk-arctic"></span></div>
+      <div class="theme-option" onclick="setTheme('green')"><span>🟢</span> Midnight Green <span class="theme-check" id="chk-green"></span></div>
+    </div>
+  </div>
+  <button class="theme-toggle" id="installBtn" onclick="installPWA()" style="display:none;border-color:var(--accent);color:var(--accent)">
+    <span class="tog-icon">📲</span> INSTALL APP
   </button>
   <div class="corner-decor" id="headerClock">--:--:--<br>STANDBY</div>
 </header>
@@ -512,22 +587,58 @@
 
 <script>
 // ─── THEME ───────────────────────────────────────────────
-function toggleTheme() {
-  const isLight = document.body.classList.toggle('light');
-  const btn = document.getElementById('themeToggleBtn');
-  btn.innerHTML = isLight
-    ? '<span class="tog-icon">🌑</span> DARK MODE'
-    : '<span class="tog-icon">☀️</span> LIGHT MODE';
-  localStorage.setItem('calTheme', isLight ? 'light' : 'dark');
-}
-// Restore saved theme on load
-if (localStorage.getItem('calTheme') === 'light') {
-  document.body.classList.add('light');
-  document.addEventListener('DOMContentLoaded', () => {
-    const btn = document.getElementById('themeToggleBtn');
-    if (btn) btn.innerHTML = '<span class="tog-icon">🌑</span> DARK MODE';
+const THEMES = {
+  redline: { icon:'🔴', label:'REDLINE' },
+  light:   { icon:'☀️',  label:'LIGHT'   },
+  arctic:  { icon:'🔵', label:'ARCTIC'  },
+  green:   { icon:'🟢', label:'MATRIX'  },
+};
+const THEME_COLORS = {
+  redline: '#141414', light: '#f0f4f8', arctic: '#0d1b2a', green: '#0a0f0a'
+};
+
+let currentTheme = localStorage.getItem('calTheme') || 'redline';
+
+function applyTheme(name) {
+  // Remove all theme classes
+  document.body.classList.remove('theme-light','theme-arctic','theme-green');
+  if (name !== 'redline') document.body.classList.add('theme-' + name);
+  currentTheme = name;
+  localStorage.setItem('calTheme', name);
+  // Update button label/icon
+  const t = THEMES[name];
+  document.getElementById('themeIcon').textContent = t.icon;
+  document.getElementById('themeLabel').textContent = t.label;
+  // Update checkmarks
+  Object.keys(THEMES).forEach(k => {
+    const el = document.getElementById('chk-' + k);
+    if (el) el.textContent = k === name ? '✓' : '';
   });
+  // Update PWA theme-color meta
+  const meta = document.querySelector('meta[name="theme-color"]');
+  if (meta) meta.setAttribute('content', THEME_COLORS[name] || '#141414');
 }
+
+function setTheme(name) {
+  applyTheme(name);
+  document.getElementById('themeMenu').style.display = 'none';
+}
+
+function toggleThemeMenu() {
+  const menu = document.getElementById('themeMenu');
+  menu.style.display = menu.style.display === 'none' ? 'block' : 'none';
+}
+
+// Close menu when clicking outside
+document.addEventListener('click', e => {
+  if (!e.target.closest('#themeSelectorWrap')) {
+    const menu = document.getElementById('themeMenu');
+    if (menu) menu.style.display = 'none';
+  }
+});
+
+// Restore saved theme
+applyTheme(currentTheme);
 let workbook = null;
 let sensorList = [];   // [{sheet, panel, sensor, row}]
 let updates = [];      // [{sheet, panel, sensor, row, zero, span, pass, date, comment}]
@@ -1665,6 +1776,45 @@ function showToast(msg, err) {
   t.className = err ? 'show err' : 'show';
   clearTimeout(t._timer);
   t._timer = setTimeout(() => t.className = '', 3000);
+}
+
+// ─── PWA INSTALL ─────────────────────────────────────────
+let deferredInstallPrompt = null;
+
+window.addEventListener('beforeinstallprompt', e => {
+  e.preventDefault();
+  deferredInstallPrompt = e;
+  document.getElementById('installBtn').style.display = 'flex';
+});
+
+function installPWA() {
+  if (!deferredInstallPrompt) return;
+  deferredInstallPrompt.prompt();
+  deferredInstallPrompt.userChoice.then(choice => {
+    if (choice.outcome === 'accepted') {
+      document.getElementById('installBtn').style.display = 'none';
+      showToast('✅ App installed! Launch from your desktop or taskbar.');
+    }
+    deferredInstallPrompt = null;
+  });
+}
+
+window.addEventListener('appinstalled', () => {
+  document.getElementById('installBtn').style.display = 'none';
+  deferredInstallPrompt = null;
+});
+
+// ─── SERVICE WORKER ──────────────────────────────────────
+if ('serviceWorker' in navigator) {
+  const swCode = [
+    'const CACHE="cal-report-v1";',
+    'self.addEventListener("install",e=>{e.waitUntil(caches.open(CACHE).then(c=>c.addAll(["/"]))); self.skipWaiting();});',
+    'self.addEventListener("activate",e=>{e.waitUntil(caches.keys().then(keys=>Promise.all(keys.filter(k=>k!==CACHE).map(k=>caches.delete(k))))); self.clients.claim();});',
+    'self.addEventListener("fetch",e=>{e.respondWith(caches.match(e.request).then(cached=>cached||fetch(e.request).catch(()=>cached)));});'
+  ].join('\n');
+  const blob = new Blob([swCode], { type: 'application/javascript' });
+  const swUrl = URL.createObjectURL(blob);
+  navigator.serviceWorker.register(swUrl).catch(() => {});
 }
 </script>
 </body>
