@@ -703,7 +703,7 @@ function findHeaderRow(data) {
     const vals = data[i].map(str);
     const idx = vals.findIndex(v => {
       const t = v.toLowerCase().trim();
-      return t === 'sensor description' || t === 'sensor name';
+      return t === 'sensor description' || t === 'sensor name' || t === 'room/sensor description';
     });
     if (idx !== -1) return { rowIdx: i, vals };
   }
@@ -726,7 +726,7 @@ function findHeaderRow(data) {
 // Columns beyond Comments (install date, serial#) are never touched.
 function colsFromHeaderRow(vals) {
   const low = vals.map(v => v.toLowerCase().trim());
-  const desc = low.findIndex(v => v === 'sensor description' || v === 'sensor name');
+  const desc = low.findIndex(v => v === 'sensor description' || v === 'sensor name' || v === 'room/sensor description');
   if (desc === -1) return null;
   return {
     desc:    desc,
@@ -869,7 +869,7 @@ function updateMapperPreview() {
     // Is this a column header row?
     const isHdr = vals.some(v => {
       const t = v.toLowerCase().trim();
-      return t === 'sensor description' || t === 'sensor name';
+      return t === 'sensor description' || t === 'sensor name' || t === 'room/sensor description';
     });
     if (isHdr) {
       blockCm = colsFromHeaderRow(vals);
@@ -936,7 +936,7 @@ function updateMapperPreview() {
     let blockCmAll = null, shCount = 0;
     for (const rowAll of dataAll) {
       const vAll = rowAll.map(str);
-      if (vAll.some(v => { const t=v.toLowerCase().trim(); return t==='sensor description'||t==='sensor name'; })) {
+      if (vAll.some(v => { const t=v.toLowerCase().trim(); return t==='sensor description'||t==='sensor name'||t==='room/sensor description'; })) {
         blockCmAll = colsFromHeaderRow(vAll); continue;
       }
       if (!blockCmAll) continue;
@@ -995,7 +995,7 @@ function parseSensors() {
       // Detect column header row → starts a new sensor block
       const isHdr = vals.some(v => {
         const t = v.toLowerCase().trim();
-        return t === 'sensor description' || t === 'sensor name';
+        return t === 'sensor description' || t === 'sensor name' || t === 'room/sensor description';
       });
       if (isHdr) {
         blockCm = colsFromHeaderRow(vals);
